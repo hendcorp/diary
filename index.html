@@ -262,6 +262,165 @@
         display: none;
       }
 
+      /* Diary View Styles */
+      #diary-view {
+        display: none;
+      }
+
+      #diary-view.active {
+        display: block;
+      }
+
+      #login-view.hidden {
+        display: none;
+      }
+
+      .logout-btn {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        color: var(--muted);
+        padding: 6px 12px;
+        border-radius: var(--radius-md);
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .logout-btn:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .entry-editor {
+        margin-bottom: 24px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 12px;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text);
+        font-size: 0.9rem;
+        font-family: inherit;
+        resize: vertical;
+        outline: none;
+      }
+
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow:
+          0 0 0 1px rgba(56, 189, 248, 0.75),
+          0 0 0 6px rgba(56, 189, 248, 0.18);
+      }
+
+      .save-btn {
+        margin-top: 10px;
+        padding: 9px 16px;
+        border-radius: 999px;
+        background: radial-gradient(circle at top left, #38bdf8, #0ea5e9 40%, #0891b2);
+        color: white;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow:
+          0 12px 25px rgba(8, 47, 73, 0.9),
+          0 0 0 1px rgba(15, 23, 42, 0.9);
+      }
+
+      .save-btn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+      }
+
+      .save-btn:active {
+        transform: translateY(0);
+      }
+
+      .entries-section {
+        margin-top: 24px;
+      }
+
+      .entries-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .entries-title {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .entries-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .entry-item {
+        padding: 14px;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        background: rgba(15, 23, 42, 0.6);
+        transition: all 0.2s;
+      }
+
+      .entry-item:hover {
+        border-color: rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.8);
+      }
+
+      .entry-date {
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .entry-content {
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .entry-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        justify-content: flex-end;
+      }
+
+      .delete-btn {
+        background: transparent;
+        border: 1px solid rgba(249, 115, 115, 0.4);
+        color: var(--danger);
+        padding: 4px 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .delete-btn:hover {
+        background: rgba(249, 115, 115, 0.1);
+        border-color: var(--danger);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
       @media (max-width: 480px) {
         .card {
           padding: 20px 18px 18px;
@@ -269,6 +428,10 @@
 
         h1 {
           font-size: 1.1rem;
+        }
+
+        .app {
+          max-width: 100%;
         }
       }
     </style>
@@ -338,28 +501,197 @@
           on this device only.
         </section>
       </section>
+
+      <section class="card" id="diary-view">
+        <header class="card-header">
+          <div class="title-group">
+            <h1>My Diary</h1>
+            <p class="subtitle">Your private thoughts</p>
+          </div>
+          <button class="logout-btn" id="logout-btn">Logout</button>
+        </header>
+
+        <div class="entry-editor">
+          <div class="field">
+            <label for="entry-text">New Entry</label>
+            <textarea
+              id="entry-text"
+              placeholder="Write your thoughts here..."
+              rows="6"
+            ></textarea>
+          </div>
+          <button type="button" class="save-btn" id="save-entry-btn">
+            Save Entry
+          </button>
+        </div>
+
+        <div class="entries-section">
+          <div class="entries-header">
+            <h2 class="entries-title">Previous Entries</h2>
+          </div>
+          <div class="entries-list" id="entries-list">
+            <div class="empty-state">No entries yet. Start writing!</div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <script>
       (function () {
         const PASSWORD = "hendra";
+        const STORAGE_KEY = "hendra_diary_entries";
 
+        // Login elements
         const form = document.getElementById("login-form");
         const passwordInput = document.getElementById("password");
         const messageEl = document.getElementById("message");
         const loginView = document.getElementById("login-view");
+
+        // Diary elements
+        const diaryView = document.getElementById("diary-view");
+        const entryText = document.getElementById("entry-text");
+        const saveEntryBtn = document.getElementById("save-entry-btn");
+        const entriesList = document.getElementById("entries-list");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        // Diary state
+        let entries = loadEntries();
 
         function showMessage(text, type) {
           messageEl.textContent = text;
           messageEl.className = "message " + (type || "");
         }
 
-        function onLoginSuccess() {
-          showMessage("Unlocked! We can now build your diary screen next.", "success");
-          loginView.classList.add("logged-in");
-          // In the next step, we can replace this with showing the real diary UI.
+        function loadEntries() {
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+          } catch (e) {
+            return [];
+          }
         }
 
+        function saveEntries() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+          } catch (e) {
+            console.error("Failed to save entries:", e);
+          }
+        }
+
+        function formatDate(timestamp) {
+          const date = new Date(timestamp);
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const entryDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+          if (entryDate.getTime() === today.getTime()) {
+            return `Today at ${date.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            })}`;
+          }
+
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          if (entryDate.getTime() === yesterday.getTime()) {
+            return `Yesterday at ${date.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            })}`;
+          }
+
+          return date.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+            hour: "numeric",
+            minute: "2-digit",
+          });
+        }
+
+        function renderEntries() {
+          if (entries.length === 0) {
+            entriesList.innerHTML = '<div class="empty-state">No entries yet. Start writing!</div>';
+            return;
+          }
+
+          // Sort entries and create a map to original indices
+          const sortedEntries = entries
+            .map((entry, originalIndex) => ({ entry, originalIndex }))
+            .sort((a, b) => b.entry.timestamp - a.entry.timestamp);
+
+          entriesList.innerHTML = sortedEntries
+            .map(({ entry, originalIndex }) => {
+              return `
+                <div class="entry-item">
+                  <div class="entry-date">${formatDate(entry.timestamp)}</div>
+                  <div class="entry-content">${escapeHtml(entry.content)}</div>
+                  <div class="entry-actions">
+                    <button class="delete-btn" data-index="${originalIndex}">Delete</button>
+                  </div>
+                </div>
+              `;
+            })
+            .join("");
+
+          // Attach delete handlers
+          entriesList.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", function () {
+              const index = parseInt(this.getAttribute("data-index"));
+              deleteEntry(index);
+            });
+          });
+        }
+
+        function escapeHtml(text) {
+          const div = document.createElement("div");
+          div.textContent = text;
+          return div.innerHTML;
+        }
+
+        function deleteEntry(index) {
+          if (confirm("Are you sure you want to delete this entry?")) {
+            entries.splice(index, 1);
+            saveEntries();
+            renderEntries();
+          }
+        }
+
+        function saveEntry() {
+          const content = entryText.value.trim();
+          if (!content) {
+            return;
+          }
+
+          entries.push({
+            content: content,
+            timestamp: Date.now(),
+          });
+
+          saveEntries();
+          entryText.value = "";
+          renderEntries();
+        }
+
+        function onLoginSuccess() {
+          sessionStorage.setItem("diary_logged_in", "true");
+          loginView.classList.add("hidden");
+          diaryView.classList.add("active");
+          passwordInput.value = "";
+          renderEntries();
+        }
+
+        function logout() {
+          sessionStorage.removeItem("diary_logged_in");
+          loginView.classList.remove("hidden");
+          diaryView.classList.remove("active");
+          entryText.value = "";
+          messageEl.textContent = "";
+          messageEl.className = "message";
+        }
+
+        // Event listeners
         form.addEventListener("submit", function (event) {
           event.preventDefault();
           const value = (passwordInput.value || "").trim();
@@ -375,6 +707,22 @@
             showMessage("Incorrect password. Try again.", "error");
           }
         });
+
+        saveEntryBtn.addEventListener("click", saveEntry);
+
+        entryText.addEventListener("keydown", function (e) {
+          if (e.ctrlKey && e.key === "Enter") {
+            saveEntry();
+          }
+        });
+
+        logoutBtn.addEventListener("click", logout);
+
+        // Check if already logged in (for page refresh)
+        const isLoggedIn = sessionStorage.getItem("diary_logged_in");
+        if (isLoggedIn === "true") {
+          onLoginSuccess();
+        }
       })();
     </script>
   </body>
